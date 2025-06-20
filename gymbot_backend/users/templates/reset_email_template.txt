@@ -1,0 +1,15 @@
+Merhaba {{ username }},
+
+Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:
+
+Bu işlemi siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz.
+
+
+Hello {{ username }},
+
+To reset your password, click the link below:
+
+If you did not do this, you can ignore this email.
+
+
+{{ reset_url }}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Korunan Alan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e6f2ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 102, 204, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h2 {
+            color: #0055aa;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #003366;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .back-button {
+            background-color: #28a745;
+        }
+
+        .back-button:hover {
+            background-color: #218838;
+        }
+
+        .error-message {
+            color: #ff0000;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .ai-box {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        #ai-response {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            font-size: 15px;
+            min-height: 50px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% if user.is_authenticated %}
+        <h2>🔒 Korunan Alan</h2>
+        <p>Hoş geldiniz, <strong>{{ user.username }}</strong>! Bu sayfa sadece giriş yapmış kullanıcılar içindir.</p>
+
+        <!-- AI Arayüzü -->
+        <div class="ai-box">
+            <label for="ai-input"><strong>💬 Gemini'ye Soru Sor:</strong></label>
+            <textarea id="ai-input" rows="3" placeholder="Örneğin: Haftalık spor programı öner..." required></textarea>
+            <button onclick="sendToGemini()">Gönder</button>
+            <div id="ai-response">Yanıt burada görüntülenecek.</div>
+        </div>
+
+        <button onclick="window.location.href='/api/users/logout/'">Çıkış Yap</button>
+        <button class="back-button" onclick="window.location.href='/api/users/'">Ana Sayfaya Dön</button>
+    {% else %}
+        <h2>🔒 Korunan Alan</h2>
+        <p class="error-message">Bir hesap giriniz!</p>
+        <div class="button-container">
+            <button onclick="window.location.href='/api/users/register/'">Kayıt Ol</button>
+            <button onclick="window.location.href='/api/users/login/'">Giriş Yap</button>
+            <button class="back-button" onclick="window.location.href='/api/users/'">Ana Sayfaya Dön</button>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    function sendToGemini() {
+        const input = document.getElementById("ai-input").value;
+        const responseDiv = document.getElementById("ai-response");
+        responseDiv.innerText = "Yanıt alınıyor...";
+    
+        fetch('/api/users/chat/gemini/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ message: input })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Sunucudan geçerli yanıt alınamadı.");
+            return response.json();
+        })
+        .then(data => {
+            if (data.response) {
+                responseDiv.innerText = data.response;
+            } else if (data.error) {
+                responseDiv.innerText = "Hata: " + data.error;
+            } else {
+                responseDiv.innerText = "Beklenmeyen bir yanıt alındı.";
+            }
+        })
+        .catch(error => {
+            responseDiv.innerText = "Bir hata oluştu: " + error.message;
+            console.error("HATA:", error);
+        });
+    }
+    
+    // Django'dan CSRF token çek
+    function getCSRFToken() {
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith('csrftoken=')) {
+                return trimmed.substring('csrftoken='.length);
+            }
+        }
+        return '';
+    }
+    </script>
+    
+
+</body>
+</html>
